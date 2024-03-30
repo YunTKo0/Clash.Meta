@@ -486,8 +486,12 @@ func StreamWebsocketConn(ctx context.Context, conn net.Conn, c *WebsocketConfig)
 	if u, err := url.Parse(c.Path); err == nil {
 		if q := u.Query(); q.Get("ed") != "" {
 			if ed, err := strconv.Atoi(q.Get("ed")); err == nil {
-				c.MaxEarlyData = ed
-				c.EarlyDataHeaderName = "Sec-WebSocket-Protocol"
+				if c.V2rayHttpUpgrade {
+					c.V2rayHttpUpgradeFastOpen = true
+				} else {
+					c.MaxEarlyData = ed
+					c.EarlyDataHeaderName = "Sec-WebSocket-Protocol"
+				}
 				q.Del("ed")
 				u.RawQuery = q.Encode()
 				c.Path = u.String()
@@ -495,7 +499,7 @@ func StreamWebsocketConn(ctx context.Context, conn net.Conn, c *WebsocketConfig)
 		}
 	}
 
-	if c.MaxEarlyData > 0 {
+	if c.MaxEarlyData > 0 && !c.V2rayHttpUpgrade {
 		return streamWebsocketWithEarlyDataConn(conn, c)
 	}
 
